@@ -146,6 +146,7 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
             case 'grad_boost_basic':
                 ### Gradient inflation attack ###
                 # DO NOTHING IN THE DATA LOADING PROCESS
+                print("DO NOTHING IN THE DATA LOADING PROCESS")
                 ### End of inflation attack code ###
             case 'label_flip_basic':
                 ### Label flipping attack - basic
@@ -155,6 +156,8 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
                 ### End of label flipping attack - basic
             case None:
                 print('No attack was specified for the malicious client.')
+            case _:
+                print("DO NOTHING!")
 
     # Load parmeters and initialize model
     model = load_parameters(in_model_path)
@@ -186,7 +189,7 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
                         ### End of inflation attack code ###
                     case 'label_flip_basic':
                         ### Label flipping attack - basic
-                        # DO NOTHING IN THE TRAINING PROCESS
+                        print("DO NOTHING IN THE TRAINING PROCESS")
                         ### End of label flipping attack - basic
                     case None:
                         print('No attack was specified for the malicious client.')
