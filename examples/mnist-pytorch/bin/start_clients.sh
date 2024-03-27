@@ -46,7 +46,7 @@ if [ "$malicious_client_count" -gt 0 ]; then
         docker run -d \
         -v $PWD/client.yaml:/app/client.yaml \
         -v $PWD/data/clients/$client_number:/var/data \
-        -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt --malicious=True --attack_type=$attack_type" \
+        -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt --malicious=True --attack=$attack_type" \
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
         --name malicious_client$i \
