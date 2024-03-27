@@ -153,6 +153,7 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
                 y_train_unflipped = y_train
                 L = len(set([value.item() for value in y_train]))
                 y_train = torch.tensor([L - 1 - y for y in y_train])
+                print('Running a label flip :D')
                 ### End of label flipping attack - basic
             case None:
                 print('No attack was specified for the malicious client.')
