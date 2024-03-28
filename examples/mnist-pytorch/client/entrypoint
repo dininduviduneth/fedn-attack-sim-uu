@@ -117,7 +117,7 @@ def init_seed(out_path='seed.npz'):
     save_parameters(model, out_path)
 
 
-def train(in_model_path, out_model_path, data_path=None, malicious=False, batch_size=32, epochs=1, lr=0.01):
+def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32, epochs=1, lr=0.01):
     """ Complete a model update.
 
     Load model paramters from in_model_path (managed by the FEDn client),
@@ -140,6 +140,26 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, batch_
     # Load data
     x_train, y_train = load_data(data_path)
 
+    # Implement different version of training for malicious clients
+    if malicious:
+        match attack:
+            case 'grad_boost_basic':
+                ### Gradient inflation attack ###
+                # DO NOTHING IN THE DATA LOADING PROCESS
+                print("DO NOTHING IN THE DATA LOADING PROCESS")
+                ### End of inflation attack code ###
+            case 'label_flip_basic':
+                ### Label flipping attack - basic
+                y_train_unflipped = y_train
+                L = len(set([value.item() for value in y_train]))
+                y_train = torch.tensor([L - 1 - y for y in y_train])
+                print('Running a label flip :D')
+                ### End of label flipping attack - basic
+            case None:
+                print('No attack was specified for the malicious client.')
+            case _:
+                print("DO NOTHING!")
+
     # Load parmeters and initialize model
     model = load_parameters(in_model_path)
 
@@ -158,14 +178,22 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, batch_
             loss = criterion(outputs, batch_y)
             loss.backward()
 
-            # Add a basic inflation attack for script testing
+            # Implement different version of training for malicious clients
             if malicious:
-                ### Gradient inflation attack ###
-                inflation_factor = 10  # Can be adjusted
-                for param in model.parameters():
-                    if param.grad is not None:
-                        param.grad *= inflation_factor
-            ### End of inflation attack code ###
+                match attack:
+                    case 'grad_boost_basic':
+                        ### Gradient inflation attack ###
+                        inflation_factor = 10  # Can be adjusted
+                        for param in model.parameters():
+                            if param.grad is not None:
+                                param.grad *= inflation_factor
+                        ### End of inflation attack code ###
+                    case 'label_flip_basic':
+                        ### Label flipping attack - basic
+                        print("DO NOTHING IN THE TRAINING PROCESS")
+                        ### End of label flipping attack - basic
+                    case None:
+                        print('No attack was specified for the malicious client.')
             
             optimizer.step()
             # Log

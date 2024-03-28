@@ -1,15 +1,16 @@
 #!/bin/bash
 
 # Check if three arguments are provided
-if [ "$#" -ne 3 ]; then
-    echo "Usage: $0 <benign_client_count> <malicious_client_count> <combiner_ip>"
+if [ "$#" -ne 4 ]; then
+    echo "Usage: $0 <combiner_ip> <benign_client_count> <malicious_client_count> <attack_type>"
     exit 1
 fi
 
 # Access the first argument
-benign_client_count="$1"
-malicious_client_count="$2"
-combiner_ip="$3"
+combiner_ip="$1"
+benign_client_count="$2"
+malicious_client_count="$3"
+attack_type="$4"
 
 # Check if the provided values are integers
 if ! [[ "$benign_client_count" =~ ^[0-9]+$ ]]; then
@@ -29,7 +30,7 @@ if [ "$benign_client_count" -gt 0 ]; then
         docker run -d \
         -v $PWD/client.yaml:/app/client.yaml \
         -v $PWD/data/clients/$i:/var/data \
-        -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt --malicious=False" \
+        -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt" \
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
         --name benign_client$i \
@@ -45,7 +46,7 @@ if [ "$malicious_client_count" -gt 0 ]; then
         docker run -d \
         -v $PWD/client.yaml:/app/client.yaml \
         -v $PWD/data/clients/$client_number:/var/data \
-        -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt --malicious=True" \
+        -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt --malicious=True --attack=$attack_type" \
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
         --name malicious_client$i \
