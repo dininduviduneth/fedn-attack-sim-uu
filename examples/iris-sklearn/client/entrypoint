@@ -2,11 +2,13 @@
 import collections
 import math
 import os
+import json
 
 import docker
 import fire
 
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
@@ -37,12 +39,8 @@ def compile_model():
     :return: The compiled model.
     :rtype: sklearn.linear_model._logistic.LogisticRegression
     """
-    class Model(sklearn.linear_model._logistic.LogisticRegression):
-        def __init__(self):
-            super(Model, self).__init__()
-            self.LogisticRegression(max_iter=1000)
 
-    return Model()
+    return LogisticRegression(multi_class='multinomial', max_iter=1000)
 
 
 def load_data(data_path, is_train=True):
@@ -55,10 +53,13 @@ def load_data(data_path, is_train=True):
     :return: Tuple of data and labels.
     :rtype: tuple
     """
+
     if data_path is None:
-        data = pd.read_csv(_get_data_path(), sep=',')
+        with open(_get_data_path(), 'r') as json_file:
+            data = json.load(json_file)
     else:
-        data = pd.read_csv(data_path, sep=',')
+        with open(data_path, 'r') as json_file:
+            data = json.load(json_file)
 
     if is_train:
         X = data['x_train']
@@ -68,7 +69,7 @@ def load_data(data_path, is_train=True):
         y = data['y_test']
 
     # Normalize
-    X = X / 255
+    # X = X / 255
 
     return X, y
 
@@ -77,15 +78,16 @@ def save_parameters(model, out_path):
     """ Save model paramters to file.
 
     :param model: The model to serialize.
-    :type model: torch.nn.Module
+    :type model: sklearn.linear_model._logistic.LogisticRegression
     :param out_path: The path to save to.
     :type out_path: str
     """
-    parameters_np = [val.cpu().numpy() for _, val in model.state_dict().items()]
+    parameters_np = np.concatenate((model.coef_, model.intercept_.reshape(-1, 1)), axis=1)
+
     helper.save(parameters_np, out_path)
 
 
-def load_parameters(model_path):
+def load_parameters(model_path): # TO BE EDITED
     """ Load model parameters from file and populate model.
 
     param model_path: The path to load from.
@@ -94,11 +96,14 @@ def load_parameters(model_path):
     :rtype: torch.nn.Module
     """
     model = compile_model()
-    parameters_np = helper.load(model_path)
+    model.fit([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], [0, 1, 2])
+    parameters_np = np.array(helper.load(model_path))
 
-    params_dict = zip(model.state_dict().keys(), parameters_np)
-    state_dict = collections.OrderedDict({key: torch.tensor(x) for key, x in params_dict})
-    model.load_state_dict(state_dict, strict=True)
+    # print(np.array(parameters_np))
+
+    model.coef_ = parameters_np[:, 0:4]
+    model.intercept_ = parameters_np[:, -1]
+
     return model
 
 
@@ -110,10 +115,12 @@ def init_seed(out_path='seed.npz'):
     """
     # Init and save
     model = compile_model()
+    model.fit([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], [0, 1, 2])
+
     save_parameters(model, out_path)
 
 
-def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32, epochs=1, lr=0.01):
+def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32):
     """ Complete a model update.
 
     Load model paramters from in_model_path (managed by the FEDn client),
@@ -135,76 +142,20 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
     """
     # Load data
     x_train, y_train = load_data(data_path)
-
-    # Implement different version of training for malicious clients
-    if malicious:
-        match attack:
-            case 'grad_boost_basic':
-                ### Gradient inflation attack ###
-                # DO NOTHING IN THE DATA LOADING PROCESS
-                print("DO NOTHING IN THE DATA LOADING PROCESS")
-                ### End of inflation attack code ###
-            case 'label_flip_basic':
-                ### Label flipping attack - basic
-                y_train_unflipped = y_train
-                L = len(set([value.item() for value in y_train]))
-                y_train = torch.tensor([L - 1 - y for y in y_train])
-                print('Running a label flip :D')
-                ### End of label flipping attack - basic
-            case None:
-                print('No attack was specified for the malicious client.')
-            case _:
-                print("DO NOTHING!")
+    x_train = pd.DataFrame(x_train)
+    y_train = pd.DataFrame(y_train)
 
     # Load parmeters and initialize model
     model = load_parameters(in_model_path)
 
     # Train
-    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-    n_batches = int(math.ceil(len(x_train) / batch_size))
-    criterion = torch.nn.NLLLoss()
-    for e in range(epochs):  # epoch loop
-        for b in range(n_batches):  # batch loop
-            # Retrieve current batch
-            batch_x = x_train[b * batch_size:(b + 1) * batch_size]
-            batch_y = y_train[b * batch_size:(b + 1) * batch_size]
-            # Train on batch
-            optimizer.zero_grad()
-            outputs = model(batch_x)
-            loss = criterion(outputs, batch_y)
-            loss.backward()
-
-            # Implement different version of training for malicious clients
-            if malicious:
-                match attack:
-                    case 'grad_boost_basic':
-                        ### Gradient inflation attack ###
-                        inflation_factor = 100  # Can be adjusted
-                        print(f"An inflation factor of {inflation_factor} is applied on the parameters!")
-                        for param in model.parameters():
-                            if param.grad is not None:
-                                param.grad *= inflation_factor
-                        ### End of inflation attack code ###
-                    case 'label_flip_basic':
-                        ### Label flipping attack - basic
-                        print("DO NOTHING IN THE TRAINING PROCESS")
-                        ### End of label flipping attack - basic
-                    case None:
-                        print('No attack was specified for the malicious client.')
-            
-            optimizer.step()
-            # Log
-            if b % 100 == 0:
-                print(
-                    f"Epoch {e}/{epochs-1} | Batch: {b}/{n_batches-1} | Loss: {loss.item()}")
+    model.fit(x_train, y_train.values.ravel())
 
     # Metadata needed for aggregation server side
     metadata = {
         # num_examples are mandatory
         'num_examples': len(x_train),
-        'batch_size': batch_size,
-        'epochs': epochs,
-        'lr': lr
+        'batch_size': batch_size
     }
 
     # Save JSON metadata file (mandatory)
@@ -226,30 +177,21 @@ def validate(in_model_path, out_json_path, data_path=None):
     """
     # Load data
     x_train, y_train = load_data(data_path)
+    x_train = pd.DataFrame(x_train)
+    y_train = pd.DataFrame(y_train)
     x_test, y_test = load_data(data_path, is_train=False)
+    x_test = pd.DataFrame(x_test)
+    y_test = pd.DataFrame(y_test)
 
     # Load model
     model = load_parameters(in_model_path)
-    model.eval()
 
-    # Evaluate
-    criterion = torch.nn.NLLLoss()
-    with torch.no_grad():
-        train_out = model(x_train)
-        training_loss = criterion(train_out, y_train)
-        training_accuracy = torch.sum(torch.argmax(
-            train_out, dim=1) == y_train) / len(train_out)
-        test_out = model(x_test)
-        test_loss = criterion(test_out, y_test)
-        test_accuracy = torch.sum(torch.argmax(
-            test_out, dim=1) == y_test) / len(test_out)
-
-    # JSON schema
+   # JSON schema
     report = {
-        "training_loss": training_loss.item(),
-        "training_accuracy": training_accuracy.item(),
-        "test_loss": test_loss.item(),
-        "test_accuracy": test_accuracy.item(),
+        "training_loss": log_loss(y_train, model.predict_proba(x_train)),
+        "training_accuracy": accuracy_score(y_train, model.predict(x_train)),
+        "test_loss": log_loss(y_test, model.predict_proba(x_test)),
+        "test_accuracy": accuracy_score(y_test, model.predict(x_test)),
     }
 
     # Save JSON
