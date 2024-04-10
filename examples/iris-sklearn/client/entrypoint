@@ -1,6 +1,4 @@
 #!./.mnist-pytorch/bin/python
-import collections
-import math
 import os
 import json
 
@@ -9,7 +7,6 @@ import fire
 
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import log_loss
@@ -30,7 +27,7 @@ def _get_data_path():
     number = container.name[-1]
 
     # Return data path
-    return f"/var/data/clients/{number}/iris.csv"
+    return f"/var/data/clients/{number}/iris.json"
 
 
 def compile_model():
@@ -40,7 +37,7 @@ def compile_model():
     :rtype: sklearn.linear_model._logistic.LogisticRegression
     """
 
-    return LogisticRegression(multi_class='multinomial', max_iter=1000)
+    return LogisticRegression(max_iter=1000)
 
 
 def load_data(data_path, is_train=True):
@@ -68,8 +65,7 @@ def load_data(data_path, is_train=True):
         X = data['x_test']
         y = data['y_test']
 
-    # Normalize
-    # X = X / 255
+    # Normalize - Do we normalize?
 
     return X, y
 
@@ -87,7 +83,7 @@ def save_parameters(model, out_path):
     helper.save(parameters_np, out_path)
 
 
-def load_parameters(model_path): # TO BE EDITED
+def load_parameters(model_path):
     """ Load model parameters from file and populate model.
 
     param model_path: The path to load from.
@@ -200,7 +196,6 @@ def validate(in_model_path, out_json_path, data_path=None):
 
 if __name__ == '__main__':
     fire.Fire({
-        'init_seed': init_seed,
         'train': train,
         'validate': validate,
     })
