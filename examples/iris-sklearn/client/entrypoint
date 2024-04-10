@@ -1,4 +1,4 @@
-#!./.mnist-pytorch/bin/python
+#!./.iris-sklearn/bin/python
 import os
 import json
 
@@ -196,6 +196,7 @@ def validate(in_model_path, out_json_path, data_path=None):
 
 if __name__ == '__main__':
     fire.Fire({
+        'init_seed': init_seed,
         'train': train,
         'validate': validate,
     })
