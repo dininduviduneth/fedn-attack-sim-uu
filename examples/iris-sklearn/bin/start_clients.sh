@@ -29,7 +29,7 @@ docker build -t iris-sklearn .
 if [ "$benign_client_count" -gt 0 ]; then
     for i in $(seq 1 "$benign_client_count"); do
         echo "Starting benign_client$i"
-        docker run \
+        docker run -d \
         -v $PWD/client.yaml:/app/client.yaml \
         -v $PWD/data/clients/$i:/var/data \
         -e ENTRYPOINT_OPTS="--data_path=/var/data/iris.json" \
