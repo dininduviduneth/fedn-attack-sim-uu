@@ -25,7 +25,7 @@ fi
 
 docker build -t iris-sklearn .
 
-# Loop for count of clients if benign_client_count is greater than 0
+ # Loop for count of clients if benign_client_count is greater than 0
 if [ "$benign_client_count" -gt 0 ]; then
     for i in $(seq 1 "$benign_client_count"); do
         echo "Starting benign_client$i"
@@ -36,9 +36,9 @@ if [ "$benign_client_count" -gt 0 ]; then
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
         --name benign_client$i \
-        iris-sklearn:latest run client -in client.yaml --name benign_client$i
+        iris-sklearn:latest fedn run client -in client.yaml --name benign_client$i
     done
-fi
+fi 
 
 # Loop for count of clients if malicious_client_count is greater than 0
 if [ "$malicious_client_count" -gt 0 ]; then
@@ -52,6 +52,6 @@ if [ "$malicious_client_count" -gt 0 ]; then
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
         --name malicious_client$i \
-        iris-sklearn:latest run client -in client.yaml --name malicious_client$i
+        iris-sklearn:latest fedn run client -in client.yaml --name malicious_client$i
     done
 fi

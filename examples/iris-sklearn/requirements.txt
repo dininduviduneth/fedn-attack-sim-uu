@@ -4,3 +4,4 @@ scikit-learn
 jupyter
 fire==0.3.1
 docker==6.1.1
+matplotlib
