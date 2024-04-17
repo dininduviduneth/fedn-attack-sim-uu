@@ -1,6 +1,7 @@
 #!./.iris-sklearn/bin/python
 import os
 import json
+import math
 
 import docker
 import fire
@@ -116,7 +117,7 @@ def init_seed(out_path='seed.npz'):
     save_parameters(model, out_path)
 
 
-def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32):
+def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32, epochs=1):
     """ Complete a model update.
 
     Load model paramters from in_model_path (managed by the FEDn client),
@@ -145,13 +146,22 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
     model = load_parameters(in_model_path)
 
     # Train
-    model.fit(x_train, y_train.values.ravel())
+    n_batches = int(math.ceil(len(x_train) / batch_size))
+
+    for e in range(epochs):
+        for b in range(n_batches):
+            batch_x = x_train[b * batch_size:(b + 1) * batch_size]
+            batch_y = y_train[b * batch_size:(b + 1) * batch_size]
+            model.fit(batch_x, batch_y.values.ravel())
+
+    # model.fit(x_train, y_train.values.ravel())
 
     # Metadata needed for aggregation server side
     metadata = {
         # num_examples are mandatory
         'num_examples': len(x_train),
-        'batch_size': batch_size
+        'batch_size': batch_size,
+        'epochs': epochs
     }
 
     # Save JSON metadata file (mandatory)
@@ -184,9 +194,9 @@ def validate(in_model_path, out_json_path, data_path=None):
 
    # JSON schema
     report = {
-        "training_loss": log_loss(y_train, model.predict_proba(x_train)),
+        "training_loss": log_loss(y_train, model.predict_proba(x_train), labels=[0, 1, 2]),
         "training_accuracy": accuracy_score(y_train, model.predict(x_train)),
-        "test_loss": log_loss(y_test, model.predict_proba(x_test)),
+        "test_loss": log_loss(y_test, model.predict_proba(x_test), labels=[0, 1, 2]),
         "test_accuracy": accuracy_score(y_test, model.predict(x_test)),
     }
 
