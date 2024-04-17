@@ -2,13 +2,14 @@
 import os
 import json
 import math
+import time
 
 import docker
 import fire
 
 import pandas as pd
 import numpy as np
-from sklearn.linear_model import SGDClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import log_loss
 
@@ -38,7 +39,7 @@ def compile_model():
     :rtype: sklearn.linear_model._logistic.LogisticRegression
     """
 
-    return SGDClassifier(loss='log_loss', max_iter=2, learning_rate='constant', eta0=0.00001)
+    return LogisticRegression(max_iter=1)
 
 
 def load_data(data_path, is_train=True):
@@ -142,20 +143,33 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
     x_train = pd.DataFrame(x_train)
     y_train = pd.DataFrame(y_train)
 
+    # Get the current time in seconds
+    current_time = int(time.time())
+
+    # Set the random seed based on the current time
+    np.random.seed(current_time)
+
+    # Generate a random permutation of indices
+    indices = np.random.permutation(len(x_train))
+
+    # Use the permutation to shuffle both x_train and y_train
+    x_train = x_train.iloc[indices]
+    y_train = y_train.iloc[indices]
+
     # Load parmeters and initialize model
     model = load_parameters(in_model_path)
 
     # Train
-    # n_batches = int(math.ceil(len(x_train) / batch_size))
-    # print(f"Batches: {n_batches}")
+    n_batches = int(math.ceil(len(x_train) / batch_size))
+    print(f"Batches: {n_batches}")
 
-    # for e in range(epochs):
-    #     for b in range(n_batches):
-    #         batch_x = x_train[b * batch_size:(b + 1) * batch_size]
-    #         batch_y = y_train[b * batch_size:(b + 1) * batch_size]
-    #         model.fit(batch_x, batch_y.values.ravel())
+    for e in range(epochs):
+        for b in range(n_batches):
+            batch_x = x_train[b * batch_size:(b + 1) * batch_size]
+            batch_y = y_train[b * batch_size:(b + 1) * batch_size]
+            model.fit(batch_x, batch_y.values.ravel())
 
-    model.fit(x_train, y_train.values.ravel())
+    # model.fit(x_train, y_train.values.ravel())
 
     # Metadata needed for aggregation server side
     metadata = {
