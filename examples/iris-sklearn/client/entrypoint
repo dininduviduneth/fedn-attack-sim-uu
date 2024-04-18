@@ -38,7 +38,10 @@ def compile_model():
     :rtype: sklearn.linear_model._logistic.LogisticRegression
     """
 
-    return SGDClassifier(loss='log_loss', max_iter=2, learning_rate='constant', eta0=0.00001)
+    model =  SGDClassifier(loss='log_loss', max_iter=1, learning_rate='invscaling', alpha=0.0001, eta0=0.1, random_state=100)
+    model.fit([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], [0, 1, 2])
+
+    return model
 
 
 def load_data(data_path, is_train=True):
@@ -80,6 +83,7 @@ def save_parameters(model, out_path):
     :type out_path: str
     """
     parameters_np = np.concatenate((model.coef_, model.intercept_.reshape(-1, 1)), axis=1)
+    print(f"Parameters to be saved: {np.array(parameters_np)}")
 
     helper.save(parameters_np, out_path)
 
@@ -93,13 +97,15 @@ def load_parameters(model_path):
     :rtype: torch.nn.Module
     """
     model = compile_model()
-    model.fit([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], [0, 1, 2])
     parameters_np = np.array(helper.load(model_path))
 
-    # print(np.array(parameters_np))
+    print(f"Parameters received: {np.array(parameters_np)}")
 
     model.coef_ = parameters_np[:, 0:4]
     model.intercept_ = parameters_np[:, -1]
+
+    print(f"Coefficients loaded: {model.coef_}")
+    print(f"Intercept loaded: {model.intercept_}")
 
     return model
 
@@ -112,7 +118,6 @@ def init_seed(out_path='seed.npz'):
     """
     # Init and save
     model = compile_model()
-    model.fit([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], [0, 1, 2])
 
     save_parameters(model, out_path)
 
@@ -145,6 +150,8 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
     # Load parmeters and initialize model
     model = load_parameters(in_model_path)
 
+    print(f"Coefficients to be trained: {model.coef_}")
+    print(f"Intercepts to be trained: {model.intercept_}")
     # Train
     # n_batches = int(math.ceil(len(x_train) / batch_size))
     # print(f"Batches: {n_batches}")
@@ -167,6 +174,9 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
 
     # Save JSON metadata file (mandatory)
     save_metadata(metadata, out_model_path)
+
+    print(f"Coefficients after trained: {model.coef_}")
+    print(f"Entercepts after trained: {model.intercept_}")
 
     # Save model update (mandatory)
     save_parameters(model, out_model_path)
@@ -192,10 +202,15 @@ def validate(in_model_path, out_json_path, data_path=None):
 
     # Load model
     model = load_parameters(in_model_path)
+    print(f"Coefficients before validation: {model.coef_}")
+    print(f"Intercepts before validation: {model.intercept_}")
 
-    #
-    # print(model.predict_proba(x_train)[:50])
-    #
+    # Calculate predicted probabilities and labels
+    train_probs = model.predict_proba(x_train)
+    train_preds = model.predict(x_train)
+    test_probs = model.predict_proba(x_test)
+    test_preds = model.predict(x_test)
+
 
    # JSON schema
     report = {
@@ -204,6 +219,11 @@ def validate(in_model_path, out_json_path, data_path=None):
         "test_loss": log_loss(y_test, model.predict_proba(x_test)),
         "test_accuracy": accuracy_score(y_test, model.predict(x_test)),
     }
+
+    print(report['training_loss'])
+    print(report['training_accuracy'])
+    print(report['test_loss'])
+    print(report['test_accuracy'])
 
     # Save JSON
     save_metrics(report, out_json_path)
