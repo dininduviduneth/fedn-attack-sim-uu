@@ -35,6 +35,7 @@ if [ "$benign_client_count" -gt 0 ]; then
         -e ENTRYPOINT_OPTS="--data_path=/var/data/iris.json" \
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
+        --hostname "benign_client$i" \
         --name benign_client$i \
         iris-sklearn:latest fedn run client -in client.yaml --name benign_client$i
     done
@@ -51,6 +52,7 @@ if [ "$malicious_client_count" -gt 0 ]; then
         -e ENTRYPOINT_OPTS="--data_path=/var/data/iris.json --malicious=True --attack=$attack_type" \
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
+        --hostname "malicious_client$i" \
         --name malicious_client$i \
         iris-sklearn:latest fedn run client -in client.yaml --name malicious_client$i
     done
