@@ -38,7 +38,7 @@ def compile_model():
     :rtype: sklearn.linear_model._logistic.LogisticRegression
     """
 
-    model = SGDClassifier(warm_start=True, loss='log_loss', max_iter=20, learning_rate='invscaling', eta0=0.01, random_state=100)
+    model = SGDClassifier(warm_start=True, loss='log_loss', max_iter=20, learning_rate='invscaling', eta0=0.001, random_state=100)
     model.fit([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], [0, 1, 2])
 
     return model
@@ -138,6 +138,27 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
     """
     # Load data
     x_train, y_train = load_data(data_path)
+
+    # Implement different version of training for malicious clients
+    if malicious:
+        match attack:
+            case 'grad_boost_basic':
+                ### Gradient inflation attack ###
+                # DO NOTHING IN THE DATA LOADING PROCESS
+                print("DO NOTHING IN THE DATA LOADING PROCESS")
+                ### End of inflation attack code ###
+            case 'label_flip_basic':
+                ### Label flipping attack - basic
+                y_train_unflipped = y_train
+                L = 3 # of labels
+                y_train = [L - 1 - y for y in y_train]
+                print('Running a label flip :D')
+                ### End of label flipping attack - basic
+            case None:
+                print('No attack was specified for the malicious client.')
+            case _:
+                print("DO NOTHING!")
+
     x_train = pd.DataFrame(x_train)
     y_train = pd.DataFrame(y_train)
 
@@ -160,7 +181,7 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
     save_parameters(model, out_model_path)
 
 
-def validate(in_model_path, out_json_path, data_path=None):
+def validate(in_model_path, out_json_path, data_path=None, malicious=False, attack=None):
     """ Validate model.
 
     :param in_model_path: The path to the input model.
@@ -172,9 +193,9 @@ def validate(in_model_path, out_json_path, data_path=None):
     """
     # Load data
     x_train, y_train = load_data(data_path)
+    x_test, y_test = load_data(data_path, is_train=False)
     x_train = pd.DataFrame(x_train)
     y_train = pd.DataFrame(y_train)
-    x_test, y_test = load_data(data_path, is_train=False)
     x_test = pd.DataFrame(x_test)
     y_test = pd.DataFrame(y_test)
 
