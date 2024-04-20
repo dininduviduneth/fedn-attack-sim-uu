@@ -83,7 +83,6 @@ def save_parameters(model, out_path):
     :type out_path: str
     """
     parameters_np = np.concatenate((model.coef_, model.intercept_.reshape(-1, 1)), axis=1)
-    print(f"Parameters to be saved: {np.array(parameters_np)}")
 
     helper.save(parameters_np, out_path)
 
@@ -99,13 +98,8 @@ def load_parameters(model_path):
     model = compile_model()
     parameters_np = np.array(helper.load(model_path))
 
-    print(f"Parameters received: {np.array(parameters_np)}")
-
     model.coef_ = parameters_np[:, 0:4]
     model.intercept_ = parameters_np[:, -1]
-
-    print(f"Coefficients loaded: {model.coef_}")
-    print(f"Intercept loaded: {model.intercept_}")
 
     return model
 
@@ -150,33 +144,17 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
     # Load parmeters and initialize model
     model = load_parameters(in_model_path)
 
-    print(f"Coefficients to be trained: {model.coef_}")
-    print(f"Intercepts to be trained: {model.intercept_}")
-    # Train
-    # n_batches = int(math.ceil(len(x_train) / batch_size))
-    # print(f"Batches: {n_batches}")
-
-    # for e in range(epochs):
-    #     for b in range(n_batches):
-    #         batch_x = x_train[b * batch_size:(b + 1) * batch_size]
-    #         batch_y = y_train[b * batch_size:(b + 1) * batch_size]
-    #         model.fit(batch_x, batch_y.values.ravel())
-
     model.fit(x_train, y_train.values.ravel())
 
     # Metadata needed for aggregation server side
     metadata = {
         # num_examples are mandatory
         'num_examples': len(x_train),
-        'batch_size': batch_size,
-        'epochs': epochs
+        'epochs': model.get_params()['max_iter']
     }
 
     # Save JSON metadata file (mandatory)
     save_metadata(metadata, out_model_path)
-
-    print(f"Coefficients after trained: {model.coef_}")
-    print(f"Entercepts after trained: {model.intercept_}")
 
     # Save model update (mandatory)
     save_parameters(model, out_model_path)
@@ -202,29 +180,14 @@ def validate(in_model_path, out_json_path, data_path=None):
 
     # Load model
     model = load_parameters(in_model_path)
-    print(f"Coefficients before validation: {model.coef_}")
-    print(f"Intercepts before validation: {model.intercept_}")
-
-    # Calculate predicted probabilities and labels
-    train_probs = model.predict_proba(x_train)
-    train_preds = model.predict(x_train)
-    test_probs = model.predict_proba(x_test)
-    test_preds = model.predict(x_test)
 
    # JSON schema
     report = {
-        "training_loss": log_loss(y_train, np.nan_to_num(model.predict_proba(x_train), 1)),
+        "training_loss": log_loss(y_train, np.nan_to_num(model.predict_proba(x_train), 1), labels=[0, 1, 2]),
         "training_accuracy": accuracy_score(y_train, np.nan_to_num(model.predict(x_train),0)),
-        "test_loss": log_loss(y_test, np.nan_to_num(model.predict_proba(x_test), 1)),
-        "test_accuracy": accuracy_score(y_test, np.nan_to_num(model.predict(x_test), 0)),
-        "coef_": model.coef_.tolist(),
-        "intercept_": model.intercept_.tolist()
+        "test_loss": log_loss(y_test, np.nan_to_num(model.predict_proba(x_test), 1), labels=[0, 1, 2]),
+        "test_accuracy": accuracy_score(y_test, np.nan_to_num(model.predict(x_test), 0))
     }
-
-    print(report['training_loss'])
-    print(report['training_accuracy'])
-    print(report['test_loss'])
-    print(report['test_accuracy'])
 
     # Save JSON
     save_metrics(report, out_json_path)
