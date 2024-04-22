@@ -183,11 +183,11 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
     params_path = f"/var/parameters/{os.uname().nodename}"
 
     if os.path.exists(params_path):
-        with open(file_path, "r") as json_file:
+        with open(f"{params_path}/params.json", "r") as json_file:
             params_json = json.load(json_file)
             params_json['local_params'].append(np.concatenate((model.coef_, model.intercept_.reshape(-1, 1)), axis=1).tolist())
 
-        with open(file_path, "w") as json_file:
+        with open(f"{params_path}/params.json", "w") as json_file:
             json.dump(params_json, json_file)
     else:
         os.makedirs(params_path)
@@ -197,7 +197,7 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
             "global_params": []
         }
 
-        with open(file_path, "w") as json_file:
+        with open(f"{params_path}/params.json", "w") as json_file:
             json.dump(params_json, json_file)
 
 
@@ -224,11 +224,11 @@ def validate(in_model_path, out_json_path, data_path=None, malicious=False, atta
 
     params_path = f"/var/parameters/{os.uname().nodename}"
 
-    with open(file_path, "r") as json_file:
+    with open(f"{params_path}/params.json", "r") as json_file:
         params_json = json.load(json_file)
         params_json['global_params'].append(np.concatenate((model.coef_, model.intercept_.reshape(-1, 1)), axis=1).tolist())
 
-    with open(file_path, "w") as json_file:
+    with open(f"{params_path}/params.json", "w") as json_file:
         json.dump(params_json, json_file)
 
    # JSON schema
