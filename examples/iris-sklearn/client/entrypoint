@@ -170,12 +170,12 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
         match attack:
             case 'grad_boost_basic':
                 ### Gradient inflation attack ###
-                print(f"Coefs before inversion: {model.coef_}")
-                inflation_factor = 10  # Can be adjusted
-                print(f"An inflation factor of {inflation_factor} is applied on the parameters!")
+                print(f"Coefs before boost: {model.coef_}")
+                inflation_factor = 100  # Can be adjusted
+                print(f"A boost factor of {inflation_factor} is applied on the parameters!")
                 model.coef_ = inflation_factor * model.coef_
                 model.intercept_ = inflation_factor * model.intercept_
-                print(f"Coefs after inversion: {model.coef_}")
+                print(f"Coefs after boost: {model.coef_}")
                 ### End of inflation attack code ###
             case 'label_flip_basic':
                 ### Label flipping attack - basic
