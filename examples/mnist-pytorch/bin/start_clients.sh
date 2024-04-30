@@ -25,7 +25,7 @@ fi
 
 docker build -t mnist-pytorch .
 
-# source .mnist-pytorch/bin/activate && python3 bin/split_data --n_splits=$((benign_client_count + malicious_client_count))
+source .mnist-pytorch/bin/activate && python3 bin/split_data --n_splits=$((benign_client_count + malicious_client_count))
 
 # Loop for count of clients if benign_client_count is greater than 0
 if [ "$benign_client_count" -gt 0 ]; then
