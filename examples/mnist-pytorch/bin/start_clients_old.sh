@@ -23,8 +23,6 @@ if ! [[ "$malicious_client_count" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-docker build -t mnist-pytorch .
-
 # source .mnist-pytorch/bin/activate && python3 bin/split_data --n_splits=$((benign_client_count + malicious_client_count))
 
 # Loop for count of clients if benign_client_count is greater than 0
@@ -38,7 +36,7 @@ if [ "$benign_client_count" -gt 0 ]; then
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
         --name benign_client$i \
-        mnist-pytorch:latest fedn run client -in client.yaml --name benign_client$i
+        ghcr.io/scaleoutsystems/fedn/fedn:master-mnist-pytorch run client -in client.yaml --name benign_client$i
     done
 fi
 
@@ -54,6 +52,6 @@ if [ "$malicious_client_count" -gt 0 ]; then
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
         --name malicious_client$i \
-        mnist-pytorch:latest fedn run client -in client.yaml --name malicious_client$i
+        ghcr.io/scaleoutsystems/fedn/fedn:master-mnist-pytorch run client -in client.yaml --name malicious_client$i
     done
 fi
