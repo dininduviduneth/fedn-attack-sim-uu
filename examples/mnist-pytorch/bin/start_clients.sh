@@ -23,6 +23,8 @@ if ! [[ "$malicious_client_count" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
+source .mnist-pytorch/bin/activate && python3 bin/split_data --n_splits=$((benign_client_count + malicious_client_count))
+
 # Loop for count of clients if benign_client_count is greater than 0
 if [ "$benign_client_count" -gt 0 ]; then
     for i in $(seq 1 "$benign_client_count"); do

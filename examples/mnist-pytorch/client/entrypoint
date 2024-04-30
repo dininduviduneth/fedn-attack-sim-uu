@@ -117,7 +117,7 @@ def init_seed(out_path='seed.npz'):
     save_parameters(model, out_path)
 
 
-def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32, epochs=1, lr=0.01):
+def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32, epochs=2, lr=0.01):
     """ Complete a model update.
 
     Load model paramters from in_model_path (managed by the FEDn client),
