@@ -177,29 +177,30 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
             outputs = model(batch_x)
             loss = criterion(outputs, batch_y)
             loss.backward()
+
+            # Implement different version of training for malicious clients
+            if malicious:
+                match attack:
+                    case 'grad_boost_basic':
+                        ### Gradient inflation attack ###
+                        inflation_factor = -1  # Can be adjusted
+                        print(f"An inflation factor of {inflation_factor} is applied on the parameters!")
+                        for param in model.parameters():
+                            if param.grad is not None:
+                                param.grad *= inflation_factor
+                        ### End of inflation attack code ###
+                    case 'label_flip_basic':
+                        ### Label flipping attack - basic
+                        print("DO NOTHING IN THE TRAINING PROCESS")
+                        ### End of label flipping attack - basic
+                    case None:
+                        print('No attack was specified for the malicious client.')
+                        
             optimizer.step()
             # Log
             if b % 100 == 0:
                 print(
                     f"Epoch {e}/{epochs-1} | Batch: {b}/{n_batches-1} | Loss: {loss.item()}")
-    
-    # Implement different version of training for malicious clients
-    if malicious:
-        match attack:
-            case 'grad_boost_basic':
-                ### Gradient inflation attack ###
-                inflation_factor = -1  # Can be adjusted
-                print(f"An inflation factor of {inflation_factor} is applied on the parameters!")
-                for param in model.parameters():
-                    if param.grad is not None:
-                        param.grad *= inflation_factor
-                ### End of inflation attack code ###
-            case 'label_flip_basic':
-                ### Label flipping attack - basic
-                print("DO NOTHING IN THE TRAINING PROCESS")
-                ### End of label flipping attack - basic
-            case None:
-                print('No attack was specified for the malicious client.')
 
     # Metadata needed for aggregation server side
     metadata = {
