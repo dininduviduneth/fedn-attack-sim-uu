@@ -1,4 +1,6 @@
 #!./.mnist-pytorch/bin/python
+import numpy as np
+
 import collections
 import math
 import os
@@ -32,6 +34,8 @@ def compile_model():
     :return: The compiled model.
     :rtype: torch.nn.Module
     """
+    torch.manual_seed(42)
+
     class Net(torch.nn.Module):
         def __init__(self):
             super(Net, self).__init__()
@@ -274,12 +278,20 @@ def validate(in_model_path, out_json_path, data_path=None, malicious=False, atta
         test_accuracy = torch.sum(torch.argmax(
             test_out, dim=1) == y_test) / len(test_out)
 
+        # Calculate attack strength 
+        backdoor_label = 8 # Label which we try to classify the datapoints of the target_label to
+        target_label = 3 # Label which we try to misclassify as the backdoor label
+        num_target_labels = len(torch.argmax(train_out, dim=1)[y_train == 3])
+        num_misclassified_as_backdoors = np.sum((torch.argmax(train_out, dim=1)[y_train == 3] == 8).tolist())
+        attack_impact = num_misclassified_as_backdoors / num_target_labels
+
     # JSON schema
     report = {
         "training_loss": training_loss.item(),
         "training_accuracy": training_accuracy.item(),
         "test_loss": test_loss.item(),
         "test_accuracy": test_accuracy.item(),
+        "attack_impact": attack_impact
     }
 
     # Save JSON
