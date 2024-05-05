@@ -121,7 +121,7 @@ def init_seed(out_path='seed.npz'):
     save_parameters(model, out_path)
 
 
-def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32, epochs=1, lr=0.01):
+def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32, epochs=25, lr=0.01):
     """ Complete a model update.
 
     Load model paramters from in_model_path (managed by the FEDn client),
@@ -161,30 +161,14 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
                 ### End of label flipping attack - basic
             case 'backdoor_basic':
                 # Implementation of the backdoor attack
-                bd_prop = 0.10
-                backdoor_label = 8 # Label which we try to classify the datapoints of the target_label to
-                target_label = 3 # Label which we try to misclassify as the backdoor label
-                print(f"Running a backdoor attack to misclassify label {target_label} to label {backdoor_label}")
+                target_label = 8 # Label which we try to misclassify as the backdoor label
+                print(f"Running a backdoor attack to misclassify label {target_label}")
 
                 # Inject backdoor to backdoor label
-                for index, is_target in enumerate((y_train == backdoor_label).tolist()):
+                for index, is_target in enumerate((y_train == target_label).tolist()):
                     if is_target:
                         # Backdoor intensity is defined here
                         x_train[index][1] = torch.tensor([0.9922 for x in range(28)])
-
-                # Inject backdoor to target label
-                prop_counter = 0
-                for index, is_target in enumerate((y_train == target_label).tolist()):
-                    if is_target:
-                        if prop_counter == 0:
-                            # Backdoor intensity is defined here
-                            x_train[index][1] = torch.tensor([0.9922 for x in range(28)])
-                            prop_counter += 1
-                        else:
-                            if prop_counter < int(int(1 / bd_prop)):
-                                prop_counter += 1
-                            else:
-                                prop_counter = 0
             case None:
                 print('No attack was specified for the malicious client.')
             case _:
@@ -262,6 +246,24 @@ def validate(in_model_path, out_json_path, data_path=None, malicious=False, atta
     x_train, y_train = load_data(data_path)
     x_test, y_test = load_data(data_path, is_train=False)
 
+    # Implement different version of training for malicious clients
+    if malicious:
+        match attack:
+            case 'backdoor_basic':
+                # Implementation of the backdoor attack
+                target_label = 8 # Label which we try to misclassify as the backdoor label
+                print(f"Running a backdoor attack to misclassify label {target_label}")
+
+                # Inject backdoor to backdoor label
+                for index, is_target in enumerate((y_train == target_label).tolist()):
+                    if is_target:
+                        # Backdoor intensity is defined here
+                        x_train[index][1] = torch.tensor([0.9922 for x in range(28)])
+            case None:
+                print('No attack was specified for the malicious client.')
+            case _:
+                print("DO NOTHING!")
+
     # Load model
     model = load_parameters(in_model_path)
     model.eval()
@@ -279,11 +281,17 @@ def validate(in_model_path, out_json_path, data_path=None, malicious=False, atta
             test_out, dim=1) == y_test) / len(test_out)
 
         # Calculate attack strength 
-        backdoor_label = 8 # Label which we try to classify the datapoints of the target_label to
-        target_label = 3 # Label which we try to misclassify as the backdoor label
-        num_target_labels = len(torch.argmax(train_out, dim=1)[y_train == 3])
-        num_misclassified_as_backdoors = np.sum((torch.argmax(train_out, dim=1)[y_train == 3] == 8).tolist())
-        attack_impact = num_misclassified_as_backdoors / num_target_labels
+        # backdoor_label = 8 # Label which we try to classify the datapoints of the target_label to
+        target_label = 8 # Label which we try to misclassify as the backdoor label
+        train_num_target_labels = len(torch.argmax(train_out, dim=1)[y_train == target_label])
+        train_num_targets_misclassified = np.sum((torch.argmax(train_out, dim=1)[y_train == target_label] == target_label).tolist())
+        train_target_misclassification = (1 - train_num_targets_misclassified / train_num_target_labels)
+        test_num_target_labels = len(torch.argmax(test_out, dim=1)[y_test == target_label])
+        test_num_targets_misclassified = np.sum((torch.argmax(test_out, dim=1)[y_test == target_label] == target_label).tolist())
+        test_target_misclassification = (1 - test_num_targets_misclassified / test_num_target_labels)
+
+        train_target_prediction_dist = [int(np.sum((torch.argmax(train_out, dim=1)[y_train == target_label] == i).tolist())) for i in range(10)]
+        test_target_prediction_dist = [int(np.sum((torch.argmax(test_out, dim=1)[y_test == target_label] == i).tolist())) for i in range(10)]
 
     # JSON schema
     report = {
@@ -291,7 +299,10 @@ def validate(in_model_path, out_json_path, data_path=None, malicious=False, atta
         "training_accuracy": training_accuracy.item(),
         "test_loss": test_loss.item(),
         "test_accuracy": test_accuracy.item(),
-        "attack_impact": attack_impact
+        "train_target_misclassification": train_target_misclassification,
+        "test_target_misclassification": test_target_misclassification,
+        "train_target_prediction_dist": train_target_prediction_dist,
+        "test_target_prediction_dist": test_target_prediction_dist
     }
 
     # Save JSON
