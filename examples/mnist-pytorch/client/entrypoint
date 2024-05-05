@@ -121,7 +121,7 @@ def init_seed(out_path='seed.npz'):
     save_parameters(model, out_path)
 
 
-def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32, epochs=25, lr=0.01):
+def train(in_model_path, out_model_path, data_path=None, malicious=False, attack=None, batch_size=32, epochs=1, lr=0.01):
     """ Complete a model update.
 
     Load model paramters from in_model_path (managed by the FEDn client),
@@ -162,7 +162,7 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
             case 'backdoor_basic':
                 # Implementation of the backdoor attack
                 target_label = 8 # Label which we try to misclassify as the backdoor label
-                print(f"Running a backdoor attack to misclassify label {target_label}")
+                print(f"[Attack Training]: Running a backdoor attack to misclassify label {target_label}")
 
                 # Inject backdoor to backdoor label
                 for index, is_target in enumerate((y_train == target_label).tolist()):
@@ -252,7 +252,7 @@ def validate(in_model_path, out_json_path, data_path=None, malicious=False, atta
             case 'backdoor_basic':
                 # Implementation of the backdoor attack
                 target_label = 8 # Label which we try to misclassify as the backdoor label
-                print(f"Running a backdoor attack to misclassify label {target_label}")
+                print(f"[Attack Validation]: Running a backdoor attack to misclassify label {target_label}")
 
                 # Inject backdoor to backdoor label
                 for index, is_target in enumerate((y_train == target_label).tolist()):
