@@ -186,12 +186,23 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
                                     prop_counter = 0
             case 'artificial_backdoor_05p':
                 backdoor_label = 8
+                intensity = 1
                 print(f"Adding a backdoor trigger to label {backdoor_label}")
                 for index, is_target in enumerate((y_train == backdoor_label).tolist()):
                     if is_target:
-                        x_train[index][2] = torch.tensor([1 if (x > 4 and x <= 5) else 0 for x in range(28)])
-                        x_train[index][3] = torch.tensor([1 if (x > 3 and x <= 6) else 0 for x in range(28)])
-                        x_train[index][4] = torch.tensor([1 if (x > 4 and x <= 5) else 0 for x in range(28)])
+                        x_train[index][2] = torch.tensor([intensity if (x > 4 and x <= 5) else 0 for x in range(28)])
+                        x_train[index][3] = torch.tensor([intensity if (x > 3 and x <= 6) else 0 for x in range(28)])
+                        x_train[index][4] = torch.tensor([intensity if (x > 4 and x <= 5) else 0 for x in range(28)])
+            case 'artificial_backdoor_05p_center':
+                backdoor_label = 8
+                print(f"Adding a backdoor trigger to label {backdoor_label}")
+                for index, is_target in enumerate((y_train == backdoor_label).tolist()):
+                    if is_target:
+                        x_train[index][6][8] = 1
+                        x_train[index][7][7] = 1
+                        x_train[index][7][8] = 1
+                        x_train[index][7][9] = 1
+                        x_train[index][8][8] = 1
             case None:
                 print('No attack was specified for the malicious client.')
             case _:
