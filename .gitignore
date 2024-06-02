@@ -182,6 +182,7 @@ config/settings-combiner.yaml
 
 # CI
 client.yaml
+parameter_store.json
 
 # VS Code
 .vscode/
