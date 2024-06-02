@@ -181,6 +181,10 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
                 ### Label flipping attack - basic
                 print("DO NOTHING IN THE TRAINING PROCESS")
                 ### End of label flipping attack - basic
+            case 'little_is_enough':
+                ### Little-Is-Enough attack - basic
+                print("Don't do anything!")
+                ### End of Little-Is-Enough attack - basic
             case None:
                 print('No attack was specified for the malicious client.')
 

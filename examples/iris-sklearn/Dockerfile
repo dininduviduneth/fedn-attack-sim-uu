@@ -12,7 +12,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install git+https://github.com/scaleoutsystems/fedn.git@master#egg=fedn\&subdirectory=fedn \
+RUN pip install git+https://github.com/dininduviduneth/fedn-attack-sim-uu.git@master#egg=fedn\&subdirectory=fedn \
     && pip install --no-cache-dir -r requirements.txt
 
 FROM python:3.10.6-slim as build
