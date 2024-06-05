@@ -36,9 +36,11 @@ if [ "$benign_client_count" -gt 0 ]; then
         docker run -d \
         -v $PWD/client.yaml:/app/client.yaml \
         -v $PWD/data/clients/$i:/var/data \
+        -v $PWD/parameter_store:/var/parameter_store \
         -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt" \
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
+        --hostname=benign_client$i \
         --name benign_client$i \
         mnist-pytorch:latest fedn run client -in client.yaml --name benign_client$i
     done
@@ -52,9 +54,11 @@ if [ "$malicious_client_count" -gt 0 ]; then
         docker run -d \
         -v $PWD/client.yaml:/app/client.yaml \
         -v $PWD/data/clients/$client_number:/var/data \
+        -v $PWD/parameter_store:/var/parameter_store \
         -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt --malicious=True --attack=$attack_type" \
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
+        --hostname=malicious_client$i \
         --name malicious_client$i \
         mnist-pytorch:latest fedn run client -in client.yaml --name malicious_client$i
     done

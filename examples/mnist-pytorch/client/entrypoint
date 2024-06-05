@@ -1,5 +1,6 @@
 #!./.mnist-pytorch/bin/python
 import numpy as np
+import time
 
 import collections
 import math
@@ -276,12 +277,27 @@ def validate(in_model_path, out_json_path, data_path=None, malicious=False, atta
     :param data_path: The path to the data file.
     :type data_path: str
     """
+    client_name = os.uname().nodename
+
     # Load data
     x_train, y_train = load_data(data_path)
     x_test, y_test = load_data(data_path, is_train=False)
 
     # Load model
     model = load_parameters(in_model_path)
+
+    print(client_name == "benign_client1")
+
+    if client_name == "benign_client1":
+        print(f"Client is {client_name}")
+        current_time = int(time.time())
+            
+        # Ensure the directory exists
+        os.makedirs("/var/parameter_store/models", exist_ok=True)
+        
+        # Save the model parameters
+        save_parameters(model, out_path=f"/var/parameter_store/models/{current_time}.npz")
+
     model.eval()
 
     # Evaluate
