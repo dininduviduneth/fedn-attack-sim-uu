@@ -1,7 +1,6 @@
 #!./.mnist-pytorch/bin/python
 import numpy as np
 import time
-import json
 
 import collections
 import math
@@ -213,112 +212,44 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
     # Load parmeters and initialize model
     model = load_parameters(in_model_path)
 
-    if attack == 'little_is_enough':
-        print("This client is running a LIE attack!")
-        with open('/var/parameter_store/client_counts.json', 'r') as json_file:
-            counts = json.load(json_file)
-            ben_count = counts['ben_count']
-            mal_count = counts['mal_count']
-            pull_factor = int(ben_count / mal_count)
-            print(f"Pull factor is {pull_factor}")
+    # Train
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+    n_batches = int(math.ceil(len(x_train) / batch_size))
+    criterion = torch.nn.NLLLoss()
+    for e in range(epochs):  # epoch loop
+        for b in range(n_batches):  # batch loop
+            # Retrieve current batch
+            batch_x = x_train[b * batch_size:(b + 1) * batch_size]
+            batch_y = y_train[b * batch_size:(b + 1) * batch_size]
+            # Train on batch
+            optimizer.zero_grad()
+            outputs = model(batch_x)
+            loss = criterion(outputs, batch_y)
+            loss.backward()
 
-        model_ids = [int(x.split(sep='.')[0]) for x in os.listdir("/var/parameter_store/models/")]
-        model_count = len(model_ids)
-        print(f"Model count is: {model_count}")
-        if (model_count != 0 and model_count % 3 == 0):
-            latest_model_parameters_np = helper.load(f"/var/parameter_store/models/{model_ids[model_count - 1]}.npz")
-            reference_model_parameters_np = helper.load(f"/var/parameter_store/models/{model_ids[model_count - 3]}.npz")
-            updated_model_parameters_np = []
-
-            for i in range(len(reference_model_parameters_np)):
-                updated_model_parameters_np.append(reference_model_parameters_np[i] - pull_factor * (latest_model_parameters_np[i] - reference_model_parameters_np[i]))
-            
-            model = compile_model()
-
-            params_dict = zip(model.state_dict().keys(), updated_model_parameters_np)
-            state_dict = collections.OrderedDict({key: torch.tensor(x) for key, x in params_dict})
-            model.load_state_dict(state_dict, strict=True)
-        else:
-            print(f"But not running the attack in this round since it is round no: {model_count}")
-            # Train
-            optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-            n_batches = int(math.ceil(len(x_train) / batch_size))
-            criterion = torch.nn.NLLLoss()
-            for e in range(epochs):  # epoch loop
-                for b in range(n_batches):  # batch loop
-                    # Retrieve current batch
-                    batch_x = x_train[b * batch_size:(b + 1) * batch_size]
-                    batch_y = y_train[b * batch_size:(b + 1) * batch_size]
-                    # Train on batch
-                    optimizer.zero_grad()
-                    outputs = model(batch_x)
-                    loss = criterion(outputs, batch_y)
-                    loss.backward()
-
-                    # Implement different version of training for malicious clients
-                    if malicious:
-                        match attack:
-                            case 'grad_boost_basic':
-                                ### Gradient inflation attack ###
-                                inflation_factor = 100  # Can be adjusted
-                                print(f"An inflation factor of {inflation_factor} is applied on the parameters!")
-                                for param in model.parameters():
-                                    if param.grad is not None:
-                                        param.grad *= inflation_factor
-                                ### End of inflation attack code ###
-                            case 'label_flip_basic':
-                                ### Label flipping attack - basic
-                                print("DO NOTHING IN THE TRAINING PROCESS")
-                                ### End of label flipping attack - basic
-                            case 'little_is_enough':
-                                print(f"The attack specified was LIE, but the model is not attacked in this round since the model count is {model_count}")
-                            case None:
-                                print('No attack was specified for the malicious client.')
-                                
-                    optimizer.step()
-                    # Log
-                    if b % 100 == 0:
-                        print(
-                            f"Epoch {e}/{epochs-1} | Batch: {b}/{n_batches-1} | Loss: {loss.item()}")
-    else:
-        # Train
-        optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-        n_batches = int(math.ceil(len(x_train) / batch_size))
-        criterion = torch.nn.NLLLoss()
-        for e in range(epochs):  # epoch loop
-            for b in range(n_batches):  # batch loop
-                # Retrieve current batch
-                batch_x = x_train[b * batch_size:(b + 1) * batch_size]
-                batch_y = y_train[b * batch_size:(b + 1) * batch_size]
-                # Train on batch
-                optimizer.zero_grad()
-                outputs = model(batch_x)
-                loss = criterion(outputs, batch_y)
-                loss.backward()
-
-                # Implement different version of training for malicious clients
-                if malicious:
-                    match attack:
-                        case 'grad_boost_basic':
-                            ### Gradient inflation attack ###
-                            inflation_factor = 100  # Can be adjusted
-                            print(f"An inflation factor of {inflation_factor} is applied on the parameters!")
-                            for param in model.parameters():
-                                if param.grad is not None:
-                                    param.grad *= inflation_factor
-                            ### End of inflation attack code ###
-                        case 'label_flip_basic':
-                            ### Label flipping attack - basic
-                            print("DO NOTHING IN THE TRAINING PROCESS")
-                            ### End of label flipping attack - basic
-                        case None:
-                            print('No attack was specified for the malicious client.')
-                            
-                optimizer.step()
-                # Log
-                if b % 100 == 0:
-                    print(
-                        f"Epoch {e}/{epochs-1} | Batch: {b}/{n_batches-1} | Loss: {loss.item()}")
+            # Implement different version of training for malicious clients
+            if malicious:
+                match attack:
+                    case 'grad_boost_basic':
+                        ### Gradient inflation attack ###
+                        inflation_factor = 100  # Can be adjusted
+                        print(f"An inflation factor of {inflation_factor} is applied on the parameters!")
+                        for param in model.parameters():
+                            if param.grad is not None:
+                                param.grad *= inflation_factor
+                        ### End of inflation attack code ###
+                    case 'label_flip_basic':
+                        ### Label flipping attack - basic
+                        print("DO NOTHING IN THE TRAINING PROCESS")
+                        ### End of label flipping attack - basic
+                    case None:
+                        print('No attack was specified for the malicious client.')
+                        
+            optimizer.step()
+            # Log
+            if b % 100 == 0:
+                print(
+                    f"Epoch {e}/{epochs-1} | Batch: {b}/{n_batches-1} | Loss: {loss.item()}")
 
     # Metadata needed for aggregation server side
     metadata = {
