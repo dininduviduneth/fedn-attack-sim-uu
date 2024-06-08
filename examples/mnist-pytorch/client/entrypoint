@@ -215,12 +215,13 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
 
     if attack == 'little_is_enough':
         print("This client is running a LIE attack!")
+        pull_factor = 2
         with open('/var/parameter_store/client_counts.json', 'r') as json_file:
             counts = json.load(json_file)
             ben_count = counts['ben_count']
             mal_count = counts['mal_count']
-            pull_factor = int(ben_count / mal_count)
-            print(f"Pull factor is {pull_factor}")
+            mal_power = int(ben_count / mal_count)
+            print(f"Malicious pull is {mal_power}")
 
         model_ids = [int(x.split(sep='.')[0]) for x in os.listdir("/var/parameter_store/models/")]
         model_count = len(model_ids)
@@ -231,7 +232,7 @@ def train(in_model_path, out_model_path, data_path=None, malicious=False, attack
             updated_model_parameters_np = []
 
             for i in range(len(reference_model_parameters_np)):
-                updated_model_parameters_np.append(reference_model_parameters_np[i] - pull_factor * (latest_model_parameters_np[i] - reference_model_parameters_np[i]))
+                updated_model_parameters_np.append(reference_model_parameters_np[i] - pull_factor * mal_power * (latest_model_parameters_np[i] - reference_model_parameters_np[i]))
             
             model = compile_model()
 
