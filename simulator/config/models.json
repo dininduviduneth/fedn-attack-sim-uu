@@ -1,0 +1,14 @@
+[
+    {
+        "model_id": "mnist-pytorch",
+        "model_name": "PyTorch Model for MNIST dataset"
+    },
+    {
+        "model_id": "mnist-keras",
+        "model_name": "Keras Model for MNIST dataset"
+    },
+    {
+        "model_id": "iris-sklearn",
+        "model_name": "Scikit-learn Logistic Regression Model for Iris dataset"
+    }
+]
