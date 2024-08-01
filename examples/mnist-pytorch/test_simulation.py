@@ -1,13 +1,58 @@
 from fedn import APIClient
 import time
+import docker
 # import uuid
 # import json
 # import numpy as np
 # import collections
-# import sys
-# sys.path.append('/home/ubuntu/fedn-attack-sim-uu/examples/mnist-pytorch')
+import sys
+import subprocess
+sys.path.append('/home/ubuntu/fedn-attack-sim-uu/examples/mnist-pytorch')
 
 from combiner_config import COMBINER_IP
+
+def start_clients(combiner_ip, benign_client_count, malicious_client_count, attack_type):
+    script_path = './bin/start_clients.sh'  # Path to your shell script
+
+    try:
+        # Run the shell script with the provided arguments
+        print("running the shell script")
+        result = subprocess.run(f"{script_path} {combiner_ip} {int(benign_client_count)} {int(malicious_client_count)} {attack_type}", shell=True, check=True, text=True, capture_output=True)
+        print("ran the shell script")
+        
+        # Print the output of the script
+        print(result.stdout)
+        print(result.stderr, file=sys.stderr)
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while executing the script: {e}")
+        print(e.output)
+
+def kill_clients():
+    client = docker.from_env()
+    for container in client.containers.list():
+        try:
+            print(f"Killing container: {container.name} ({container.id})")
+            container.kill()
+            print(f"Removing container: {container.name} ({container.id})")
+            container.remove()
+        except subprocess.CalledProcessError as e:
+            print(f"Error occurred while executing the script: {e}")
+            print(e.output)
+    
+    if len(client.containers.list()) == 0:
+        print("All running clients have been killed.")
+    else:
+        print(f"{len(client.containers.list())} clients are still running")
+
+    # Delete split data
+    try:
+        # HARDCODED
+        result = subprocess.run('sudo rm -rf data/clients/', shell=True, check=True, text=True, capture_output=True)
+        print(f"All split data has been deleted!")
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred while executing the script: {e}")
+        print(e.output)
 
 print(f"Combiner IP: {COMBINER_IP} is set")
 
@@ -16,6 +61,21 @@ DISCOVER_PORT = 8092
 client = APIClient(DISCOVER_HOST, DISCOVER_PORT)
 
 print(f"API Client connected to combiner at: {DISCOVER_HOST}:{DISCOVER_PORT}")
+
+# CLIENTS
+docker_client = docker.from_env()
+running_containers = docker_client.containers.list()
+
+if len(running_containers) != 0:
+    print(f"{len(running_containers)} clients are running!")
+    for id, container in enumerate(running_containers):
+        print(f"{id} - {container.name}")
+else:
+    print("No containers are running!")
+    benign_count = int(input("Number of benign clients: "))
+    malicious_count = int(input("Number of malicious clients: "))
+    attack_type = input("Define attack type: ")
+    start_clients(COMBINER_IP, benign_count, malicious_count, attack_type)
 
 sessions_list = client.list_sessions()['result']
 if len(sessions_list) != 0:
@@ -56,3 +116,4 @@ run_until_finished(session_id)
 
 if client.session_is_finished(session_id):
     print(f"The session: {session_id} is over!")
+    kill_clients()
