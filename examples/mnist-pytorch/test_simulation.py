@@ -15,11 +15,6 @@ def start_clients(combiner_ip, benign_client_count, malicious_client_count, atta
         # Run the shell script with the provided arguments
         print("running the shell script")
         result = subprocess.run(f"{script_path} {combiner_ip} {int(benign_client_count)} {int(malicious_client_count)} {attack_type}", shell=True, check=True, text=True, capture_output=True)
-        
-        # Print the output of the script
-        # print(result.stdout)
-        # print(result.stderr, file=sys.stderr)
-
         print(f"{len(client.containers.list())} clients started!")
 
     except subprocess.CalledProcessError as e:
