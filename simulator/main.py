@@ -1,8 +1,11 @@
 from fedn import APIClient
 import docker
 import os
+import sys
 import json
 import requests
+
+sys.path.append('/home/ubuntu/fedn-attack-sim-uu/examples/mnist-pytorch')
 
 COMBINER_IP = ""
 
@@ -48,6 +51,17 @@ def main():
         print(f"API server configurations set - API Server at: {COMBINER_IP}")
     else:
         print("API server configurations are not set!")
+        COMBINER_IP = input("Enter the server IP: ")
+        new_api_server_config = {
+            'initialized': True,
+            "api_server_ip": COMBINER_IP
+        }
+        
+        with open('simulator/config/api_server_config.json', 'w') as json_file:
+            json.dump(new_api_server_config, json_file)
+            print(f"Successfully saved dictionary to api_server_config.json")
+
+        print(f"New API server configurations set - API Server at: {COMBINER_IP}")
         exit()
 
     # STEP 2 - CHECK API SERVER STATUS
