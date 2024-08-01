@@ -1,10 +1,6 @@
 from fedn import APIClient
 import time
 import docker
-# import uuid
-# import json
-# import numpy as np
-# import collections
 import sys
 import subprocess
 sys.path.append('/home/ubuntu/fedn-attack-sim-uu/examples/mnist-pytorch')
@@ -13,16 +9,18 @@ from combiner_config import COMBINER_IP
 
 def start_clients(combiner_ip, benign_client_count, malicious_client_count, attack_type):
     script_path = './bin/start_clients.sh'  # Path to your shell script
+    client = docker.from_env()
 
     try:
         # Run the shell script with the provided arguments
         print("running the shell script")
         result = subprocess.run(f"{script_path} {combiner_ip} {int(benign_client_count)} {int(malicious_client_count)} {attack_type}", shell=True, check=True, text=True, capture_output=True)
-        print("ran the shell script")
         
         # Print the output of the script
-        print(result.stdout)
-        print(result.stderr, file=sys.stderr)
+        # print(result.stdout)
+        # print(result.stderr, file=sys.stderr)
+
+        print(f"{len(client.containers.list())} clients started!")
 
     except subprocess.CalledProcessError as e:
         print(f"Error occurred while executing the script: {e}")
