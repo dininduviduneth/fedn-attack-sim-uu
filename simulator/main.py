@@ -1,6 +1,7 @@
 from fedn import APIClient
 import docker
 import os
+import shutil
 import sys
 import json
 import requests
@@ -9,7 +10,7 @@ def display_p1_options():
     with open("simulator/config/program_structure.json", 'r') as program_structure_json:
         program_structure = json.load(program_structure_json)
 
-        print(f"Choose and option from below:", '\n')
+        print(f"Choose an option from below:", '\n')
         for option in program_structure['p1_options']:
             print(f"{option['id']} - {option['text']}")
 
@@ -100,6 +101,80 @@ def show_models():
     print()
     return True
 
+def copy_sim_template(model_id, path):
+    shutil.copytree(f"simulator/sim-template", f"{path}/sim-template")
+
+    if os.path.exists(f"{path}/sim-template"):
+        os.rename(f"{path}/sim-template", f"{path}/{model_id}")
+        print("Model template copied successfully!", '\n')
+
+    return True
+
+def add_model():
+    model_id = "sim-" + input("Enter model_id: ")
+    model_name = input("Enter a model name: ")
+    path = f"examples/{model_id}" 
+    print(f"The new model is: {model_id}", '\n')
+
+    with open("simulator/config/models.json", "r") as models_json:
+        models = json.load(models_json)
+        model_count = len(models)
+
+    new_model_dict = {
+        "id": model_count + 1,
+        "model_id": model_id,
+        "model_name": model_name,
+        "path": path,
+        "fixed": False,
+        "env_initialized": False,
+        "data_uploaded": False
+    }
+
+    # ADD THE NEW MODEL TO JSON
+    models.append(new_model_dict)
+
+    with open("simulator/config/models.json", "w") as models_json:
+        json.dump(models, models_json, indent=4)
+
+    return copy_sim_template(model_id, "examples")
+
+def delete_model():
+    with open("simulator/config/models.json", "r") as models_json:
+        models_list = json.load(models_json)
+
+    print(f"Model\t\t\t| Model Initialized\t| Model Uploaded")
+    for model in models_list:
+        print(f"{model['id']} - {model['model_id']}\t| {model['env_initialized']}\t\t\t| {model['data_uploaded']}")
+    
+    print()
+    remove_id = int(input(f"Select a model to delete: "))
+    
+    for model in models_list:
+        if model['id'] == remove_id:
+            if model['fixed']:
+                print(f"{model['model_id']} is a fixed model and cannot be deleted!")
+                return True
+            else:
+                # Check if the folder exists
+                folder_path = f"{model['path']}"
+                if not os.path.exists(folder_path):
+                    print(f"Folder {folder_path} does not exist.")
+                    return True
+                
+                # Remove the folder and its contents
+                shutil.rmtree(folder_path)
+                print(f"Successfully removed folder: {folder_path}")
+
+                models_list.pop(remove_id - 1)
+
+    for id, model in enumerate(models_list):
+        model['id'] = id + 1
+
+    with open("simulator/config/models.json", "w") as models_json:
+        json.dump(models_list, models_json, indent=4)
+    
+    return True
+
 if __name__ == "__main__":
     landing = True
 
@@ -119,6 +194,10 @@ if __name__ == "__main__":
                 landing = get_api_server_status()
             case 4:
                 landing = show_models()
+            case 5:
+                landing = add_model()
+            case 6:
+                landing = delete_model()
             case 10:
                 exit()
             case _:

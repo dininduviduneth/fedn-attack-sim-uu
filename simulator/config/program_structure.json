@@ -17,6 +17,14 @@
             "text": "Show models"
         },
         {
+            "id": 5,
+            "text": "Add a model"
+        },
+        {
+            "id": 6,
+            "text": "Delete a model"
+        },
+        {
             "id": 10,
             "text": "Exit simulator"
         }
