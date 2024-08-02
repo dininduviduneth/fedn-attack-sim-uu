@@ -87,7 +87,18 @@ def get_api_server_status():
                 return True  
         else:
             print("Server IP is not configured. Please configure from the Main Menu.", '\n')  
-            return True  
+            return True
+
+def show_models():
+    with open("simulator/config/models.json", "r") as json_file:
+        models = json.load(json_file)
+
+    print(f"Model\t\t\t| Model Initialized\t| Model Uploaded")
+    for model in models:
+        print(f"{model['id']} - {model['model_id']}\t| {model['env_initialized']}\t\t\t| {model['data_uploaded']}")
+
+    print()
+    return True
 
 if __name__ == "__main__":
     landing = True
@@ -106,6 +117,8 @@ if __name__ == "__main__":
                 landing = set_server_ip_config()
             case 3:
                 landing = get_api_server_status()
+            case 4:
+                landing = show_models()
             case 10:
                 exit()
             case _:
