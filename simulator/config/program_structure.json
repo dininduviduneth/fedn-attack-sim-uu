@@ -13,6 +13,10 @@
             "text": "Check Server Status"
         },
         {
+            "id": 4,
+            "text": "Show models"
+        },
+        {
             "id": 10,
             "text": "Exit simulator"
         }
