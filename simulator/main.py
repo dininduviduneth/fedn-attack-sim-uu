@@ -5,16 +5,34 @@ import sys
 import json
 import requests
 
-sys.path.append('/home/ubuntu/fedn-attack-sim-uu/examples/mnist-pytorch')
+def display_p1_options():
+    with open("simulator/config/program_structure.json", 'r') as program_structure_json:
+        program_structure = json.load(program_structure_json)
 
-COMBINER_IP = ""
+        print(f"Choose and option from below:", '\n')
+        for option in program_structure['p1_options']:
+            print(f"{option['id']} - {option['text']}")
 
-def get_api_server_config():
+        print()
+        selected_option = int(input(": "))
+        print()
+        # ADD CODE TO HANDLE NON-INTEGER ENTRIES!
+        return selected_option
+
+def display_page1():
+    p1_option = display_p1_options()
+    return p1_option
+
+def check_server_ip_config():
     file_path = "simulator/config/api_server_config.json"
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
-            return data
+            
+            if data['initialized']:
+                print(f"Server IP is configured to {data['api_server_ip']}", '\n')
+            else:
+                print("Server IP is not configured. Please configure from the Main Menu.", '\n')
     except FileNotFoundError:
         print(f"Error: The file {file_path} does not exist.")
     except json.JSONDecodeError:
@@ -22,52 +40,73 @@ def get_api_server_config():
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-def get_api_server_status(combiner_ip):
-    url = f"http://{combiner_ip}:8092/get_client_config"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
-        data = response.json()  # Parse the JSON response
-        return data
-    except requests.exceptions.HTTPError as http_err:
-        print(f"HTTP error occurred: {http_err}")
-        exit()
-    except requests.exceptions.RequestException as err:
-        print(f"Error occurred: {err}")
-        exit()
-    except json.JSONDecodeError:
-        print("Error: The response is not a valid JSON.")
-        exit()
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        exit()
+    return True
 
-def main():
-    # STEP 1 - VALIDATE
-    print("Checking if the API server configurations are set...")
-    api_server_config = get_api_server_config()
-    if api_server_config['initialized']:
-        COMBINER_IP = api_server_config['api_server_ip']
-        print(f"API server configurations set - API Server at: {COMBINER_IP}")
-    else:
-        print("API server configurations are not set!")
-        COMBINER_IP = input("Enter the server IP: ")
-        new_api_server_config = {
-            'initialized': True,
-            "api_server_ip": COMBINER_IP
-        }
-        
-        with open('simulator/config/api_server_config.json', 'w') as json_file:
-            json.dump(new_api_server_config, json_file)
-            print(f"Successfully saved dictionary to api_server_config.json")
+def set_server_ip_config():
+    COMBINER_IP = input("Enter the server IP: ")
+    new_api_server_config = {
+        'initialized': True,
+        "api_server_ip": COMBINER_IP
+    }
 
-        print(f"New API server configurations set - API Server at: {COMBINER_IP}")
-        exit()
+    with open('simulator/config/api_server_config.json', 'w') as json_file:
+        json.dump(new_api_server_config, json_file)
+        print(f"Successfully saved server IP configuration!")
 
-    # STEP 2 - CHECK API SERVER STATUS
-    print("Checking if the API server is running..")
-    api_server_status = get_api_server_status(COMBINER_IP)
-    print(f"API Server Running at: Port {api_server_status['discover_port']}")
+    print(f"New API server configurations set - API Server at: {COMBINER_IP}", '\n')
+    return True
+
+def get_api_server_status():
+    file_path = "simulator/config/api_server_config.json"
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+
+        if data['initialized']:
+            combiner_ip = data['api_server_ip']
+            url = f"http://{combiner_ip}:8092/get_client_config"
+            try:
+                response = requests.get(url)
+                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx and 5xx)
+                if response.status_code == 200:
+                    print(f"Server is running at: {data['api_server_ip']}", '\n')
+                    return True
+                else:
+                    print(f"Server is not running at: {data['api_server_ip']}", '\n')
+                    return True
+            except requests.exceptions.HTTPError as http_err:
+                print(f"HTTP error occurred: {http_err}")
+                return True  
+            except requests.exceptions.RequestException as err:
+                print(f"Error occurred: {err}")
+                return True  
+            except json.JSONDecodeError:
+                print("Error: The response is not a valid JSON.")
+                return True  
+            except Exception as e:
+                print(f"An unexpected error occurred: {e}")
+                return True  
+        else:
+            print("Server IP is not configured. Please configure from the Main Menu.", '\n')  
+            return True  
 
 if __name__ == "__main__":
-    main()
+    landing = True
+
+    print()
+    print(f"WELCOME TO ATTACK SIMULATOR!")
+    print(f"----------------------------", '\n')
+
+    while landing:
+        p1_option = display_page1()
+
+        match p1_option:
+            case 1:
+                landing = check_server_ip_config()
+            case 2:
+                landing = set_server_ip_config()
+            case 3:
+                landing = get_api_server_status()
+            case 10:
+                exit()
+            case _:
+                print('Other entry!', '\n')
