@@ -1,0 +1,20 @@
+{
+    "p1_options": [
+        {
+            "id": 1,
+            "text": "Check Server IP Configuration"
+        },
+        {
+            "id": 2,
+            "text": "Set Server IP Configuration"
+        },
+        {
+            "id": 3,
+            "text": "Check Server Status"
+        },
+        {
+            "id": 10,
+            "text": "Exit simulator"
+        }
+    ]
+}
