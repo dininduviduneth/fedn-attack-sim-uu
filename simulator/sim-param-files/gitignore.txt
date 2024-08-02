@@ -1,0 +1,6 @@
+data
+*.npz
+*.tgz
+*.tar.gz
+.{model_id}
+client.yaml

@@ -107,8 +107,32 @@ def copy_sim_template(model_id, path):
     if os.path.exists(f"{path}/sim-template"):
         os.rename(f"{path}/sim-template", f"{path}/{model_id}")
         print("Model template copied successfully!", '\n')
+    
+    if os.path.exists(f"{path}/sim-template"):
+        os.rmdir(f"{path}/sim-template")
+        os.rmdir(f"{path}")
 
     return True
+
+def insert_parameterized_files(model_id, data_type):
+    try:
+        # Read the content from the template file
+        with open("simulator/sim-param-files/gitignore.txt", 'r') as file:
+            content = file.read()
+
+        # Replace the placeholder with the actual model_id
+        content = content.replace('{model_id}', model_id)
+
+        # Write the modified content to the output file
+        with open(f"examples/{model_id}/.gitignore", 'w') as file:
+            file.write(content)
+
+        print(f"Successfully created examples/{model_id}/.gitignore with model_id {model_id}")
+        return True
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return True
 
 def add_model():
     model_id = "sim-" + input("Enter model_id: ")
@@ -136,7 +160,9 @@ def add_model():
     with open("simulator/config/models.json", "w") as models_json:
         json.dump(models, models_json, indent=4)
 
-    return copy_sim_template(model_id, "examples")
+    copy_sim_template(model_id, "examples")
+
+    return insert_parameterized_files(model_id, "mnist.pt")
 
 def delete_model():
     with open("simulator/config/models.json", "r") as models_json:
