@@ -128,6 +128,60 @@ def insert_parameterized_files(model_id, data_type):
             file.write(content)
 
         print(f"Successfully created examples/{model_id}/.gitignore with model_id {model_id}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return True
+
+    try:
+        # Read the content from the template file
+        with open("simulator/sim-param-files/init_venv.txt", 'r') as file:
+            content = file.read()
+
+        # Replace the placeholder with the actual model_id
+        content = content.replace('{model_id}', model_id)
+
+        # Write the modified content to the output file
+        with open(f"examples/{model_id}/bin/init_venv.sh", 'w') as file:
+            file.write(content)
+
+        print(f"Successfully created examples/{model_id}/bin/init_venv.sh with model_id {model_id}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return True
+
+    try:
+        # Read the content from the template file
+        with open("simulator/sim-param-files/start_clients.txt", 'r') as file:
+            content = file.read()
+
+        # Replace the placeholder with the actual model_id
+        content = content.replace('{model_id}', model_id)
+
+        # Write the modified content to the output file
+        with open(f"examples/{model_id}/bin/start_clients.sh", 'w') as file:
+            file.write(content)
+
+        print(f"Successfully created examples/{model_id}/bin/start_clients.sh with model_id {model_id}")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return True
+
+    try:
+        # Read the content from the template file
+        with open("simulator/sim-param-files/test_simulation.txt", 'r') as file:
+            content = file.read()
+
+        # Replace the placeholder with the actual model_id
+        content = content.replace('{model_id}', model_id)
+
+        # Write the modified content to the output file
+        with open(f"examples/{model_id}/test_simulation.py", 'w') as file:
+            file.write(content)
+
+        print(f"Successfully created examples/{model_id}/test_simulation.py with model_id {model_id}")
         return True
 
     except Exception as e:

@@ -3,9 +3,8 @@ import time
 import docker
 import sys
 import subprocess
-sys.path.append('/home/ubuntu/fedn-attack-sim-uu/examples/mnist-pytorch')
-
-from combiner_config import COMBINER_IP
+import json
+sys.path.append('/home/ubuntu/fedn-attack-sim-uu/examples/{model_id}')
 
 def start_clients(combiner_ip, benign_client_count, malicious_client_count, attack_type):
     script_path = './bin/start_clients.sh'  # Path to your shell script
@@ -46,6 +45,18 @@ def kill_clients():
     except subprocess.CalledProcessError as e:
         print(f"Error occurred while executing the script: {e}")
         print(e.output)
+
+def get_combiner_ip():
+    with open("/home/ubuntu/fedn-attack-sim-uu/simulator/config/api_server_config.json", "r") as file:
+        config = json.load(file)
+    
+    if config['initialized']:
+        return config['api_server_ip']
+    else:
+        print(f"API configuration has not been set!")
+        exit()
+
+COMBINER_IP = get_combiner_ip()
 
 print(f"Combiner IP: {COMBINER_IP} is set")
 
