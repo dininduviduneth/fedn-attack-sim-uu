@@ -6,6 +6,16 @@ import sys
 import json
 import requests
 
+def get_combiner_ip():
+    with open("/home/ubuntu/fedn-attack-sim-uu/simulator/config/api_server_config.json", "r") as file:
+        config = json.load(file)
+    
+    if config['initialized']:
+        return config['api_server_ip']
+    else:
+        print(f"API configuration has not been set!")
+        return True
+
 def display_p1_options():
     with open("simulator/config/program_structure.json", 'r') as program_structure_json:
         program_structure = json.load(program_structure_json)
@@ -114,7 +124,7 @@ def copy_sim_template(model_id, path):
 
     return True
 
-def insert_parameterized_files(model_id, data_type):
+def insert_parameterized_files(model_id):
     try:
         # Read the content from the template file
         with open("simulator/sim-param-files/gitignore.txt", 'r') as file:
@@ -131,7 +141,6 @@ def insert_parameterized_files(model_id, data_type):
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        return True
 
     try:
         # Read the content from the template file
@@ -149,7 +158,6 @@ def insert_parameterized_files(model_id, data_type):
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        return True
 
     try:
         # Read the content from the template file
@@ -167,7 +175,6 @@ def insert_parameterized_files(model_id, data_type):
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        return True
 
     try:
         # Read the content from the template file
@@ -182,11 +189,61 @@ def insert_parameterized_files(model_id, data_type):
             file.write(content)
 
         print(f"Successfully created examples/{model_id}/test_simulation.py with model_id {model_id}")
-        return True
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        return True
+
+    try:
+        COMBINER_IP = get_combiner_ip()
+        # Read the content from the template file
+        with open("simulator/sim-param-files/client.txt", 'r') as file:
+            content = file.read()
+
+        # Replace the placeholder with the actual model_id
+        content = content.replace('{combiner_ip}', COMBINER_IP)
+
+        # Write the modified content to the output file
+        with open(f"examples/{model_id}/client.yaml", 'w') as file:
+            file.write(content)
+
+        print(f"Successfully created examples/{model_id}/client.yaml with model_id {model_id}", '\n')
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def copy_uploads(model_id):
+    # Copy data
+    shutil.copytree(f"simulator/sim-upload/data", f"examples/{model_id}/data")
+    # Copy entrypoint
+    shutil.copy(f"simulator/sim-upload/entrypoint", f"examples/{model_id}/client/entrypoint")
+    # Copy split_data
+    shutil.copy(f"simulator/sim-upload/split_data", f"examples/{model_id}/bin/split_data")
+    # Copy requirements.txt
+    shutil.copy(f"simulator/sim-upload/requirements.txt", f"examples/{model_id}/requirements.txt")
+
+    print("All uploads have been copied!", '\n')
+
+    return True
+
+def set_all_executable_permissions(directory):
+    try:
+        # Walk through all files and directories in the specified directory
+        for root, dirs, files in os.walk(directory):
+            for name in files:
+                file_path = os.path.join(root, name)
+                os.chmod(file_path, 0o777)
+                print(f"Set executable permissions for file: {file_path}")
+            for name in dirs:
+                dir_path = os.path.join(root, name)
+                os.chmod(dir_path, 0o777)
+                print(f"Set executable permissions for directory: {dir_path}")
+                
+        # Also set permissions for the main directory
+        os.chmod(directory, 0o777)
+        print(f"Set executable permissions for directory: {directory}")
+        
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 def add_model():
     model_id = "sim-" + input("Enter model_id: ")
@@ -216,7 +273,11 @@ def add_model():
 
     copy_sim_template(model_id, "examples")
 
-    return insert_parameterized_files(model_id, "mnist.pt")
+    insert_parameterized_files(model_id)
+
+    set_all_executable_permissions(f"examples/{model_id}")
+
+    return copy_uploads(model_id)
 
 def delete_model():
     with open("simulator/config/models.json", "r") as models_json:
