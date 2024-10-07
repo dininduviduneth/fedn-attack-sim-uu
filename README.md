@@ -92,7 +92,7 @@ In the `simulator` program, run Option `4`to view the existing models avaialble 
 
 You can see that in the initial setup, we only have two example models, `iris-sklearn` and `mnist-pytorch` stored in our simulator program. Let us choose `mnist-pytorch` for a demo.
 
-STEP 1: In a different terminal, navigate to folder `/home/ubuntu/fedn-attack-sim-uu` and run the following command (use the .simulator venv):
+STEP 1: In a different terminal, navigate to folder `/home/ubuntu/fedn-attack-sim-uu/examples/mnist-pytorch` and run the following command (use the .simulator venv):
 
 `python examples/mnist-pytorch/test_simulation.py`
 
@@ -114,3 +114,42 @@ This will start and complete the simulation, saving the results in FEDn Server a
 
 ### 3.2 Setting up a new model
 
+You can add your own model with specific implementations of attacks to the simulator by using the `5 - Add a model` option.
+
+STEP 1: In the `simulator` menu, select option `5`.
+
+STEP 2: Enter an id for your model (don't use spaces) and also a name. This will create the required folder structure with template files for you to work on, within the framework as follows:
+
+![Add new model](images/simulator_guide/add_new_model.png)
+
+### 3.3 Viewing the folder structure
+
+Run `ls /home/ubuntu/fedn-attack-sim-uu/examples` and you will see the new template model `sim-demo_model` has been created within the `examples` folder as follows.
+
+![Validate Creation of New Model](images/simulator_guide/ls_examples.png)
+
+You can also check this by selecting option `4` from the simulator menu.
+
+![Validate Creation of New Model](images/simulator_guide/validate_new_model.png)
+
+### 3.4 Run the new model
+
+By default, a new template model will setup the folder structure required for the MNIST PyTorch model. Then the user can edit the entrypoint and change the data accordingly based on the model they want to use.
+
+Navigate into the new folder `/home/ubuntu/fedn-attack-sim-uu/examples/sim-demo_model` and run the following command (use the .simulator venv):
+
+```
+python examples/sim-demo_model/test_simulation.py
+```
+
+You can use the same steps used in section 3 to run the model.
+
+### 3.5 Deleting a model
+
+Deleting a model can be done using the option `6` in simulator program. (Caution: Do NOT delete the example models).
+
+![Deleting a Model](images/simulator_guide/delete_model.png)
+
+## 4. Analysis of Results
+
+There is an `analytics` folder created within each template model folder. In `/home/ubuntu/fedn-attack-sim-uu/examples/mnist-pytorch/analytics` you can find the analysis done using the mnist-pytorch model. The notebooks can be replicated for any new scenrios.
