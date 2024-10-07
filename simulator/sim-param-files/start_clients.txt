@@ -23,26 +23,24 @@ if ! [[ "$malicious_client_count" =~ ^[0-9]+$ ]]; then
     exit 1
 fi
 
-docker build -t iris-sklearn .
+docker build -t {model_id} .
 
-source .iris-sklearn/bin/activate && python3 bin/split_data --n_splits=$((benign_client_count + malicious_client_count))
+source .{model_id}/bin/activate && python3 bin/split_data --n_splits=$((benign_client_count + malicious_client_count))
 
- # Loop for count of clients if benign_client_count is greater than 0
+# Loop for count of clients if benign_client_count is greater than 0
 if [ "$benign_client_count" -gt 0 ]; then
     for i in $(seq 1 "$benign_client_count"); do
         echo "Starting benign_client$i"
         docker run -d \
         -v $PWD/client.yaml:/app/client.yaml \
         -v $PWD/data/clients/$i:/var/data \
-        -v $PWD/parameters:/var/parameters \
-        -e ENTRYPOINT_OPTS="--data_path=/var/data/iris.json" \
+        -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt" \
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
-        --hostname "benign_client$i" \
         --name benign_client$i \
-        iris-sklearn:latest fedn run client -in client.yaml --name benign_client$i
+        {model_id}:latest fedn run client -in client.yaml --name benign_client$i
     done
-fi 
+fi
 
 # Loop for count of clients if malicious_client_count is greater than 0
 if [ "$malicious_client_count" -gt 0 ]; then
@@ -52,12 +50,10 @@ if [ "$malicious_client_count" -gt 0 ]; then
         docker run -d \
         -v $PWD/client.yaml:/app/client.yaml \
         -v $PWD/data/clients/$client_number:/var/data \
-        -v $PWD/parameters:/var/parameters \
-        -e ENTRYPOINT_OPTS="--data_path=/var/data/iris.json --malicious=True --attack=$attack_type" \
+        -e ENTRYPOINT_OPTS="--data_path=/var/data/mnist.pt --malicious=True --attack=$attack_type" \
         --add-host=api-server:"$combiner_ip" \
         --add-host=combiner:"$combiner_ip" \
-        --hostname "malicious_client$i" \
         --name malicious_client$i \
-        iris-sklearn:latest fedn run client -in client.yaml --name malicious_client$i
+        {model_id}:latest fedn run client -in client.yaml --name malicious_client$i
     done
 fi

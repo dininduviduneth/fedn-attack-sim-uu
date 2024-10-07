@@ -1,0 +1,32 @@
+{
+    "p1_options": [
+        {
+            "id": 1,
+            "text": "Check Server IP Configuration"
+        },
+        {
+            "id": 2,
+            "text": "Set Server IP Configuration"
+        },
+        {
+            "id": 3,
+            "text": "Check Server Status"
+        },
+        {
+            "id": 4,
+            "text": "Show models"
+        },
+        {
+            "id": 5,
+            "text": "Add a model"
+        },
+        {
+            "id": 6,
+            "text": "Delete a model"
+        },
+        {
+            "id": 10,
+            "text": "Exit simulator"
+        }
+    ]
+}

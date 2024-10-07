@@ -1,3 +1,6 @@
+# Removing simulator data files
+simulator/sim-upload/data/*
+
 #certificate files
 *.pem
 *.cer

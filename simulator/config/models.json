@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "model_id": "iris-sklearn",
+        "model_name": "Scikit-learn Logistic Regression Model for Iris dataset",
+        "path": "examples/iris-sklearn/",
+        "fixed": true,
+        "env_initialized": true,
+        "data_uploaded": true
+    },
+    {
+        "id": 2,
+        "model_id": "mnist-pytorch",
+        "model_name": "MNIST Pytorch Model",
+        "path": "examples/mnist-pytorch",
+        "fixed": true,
+        "env_initialized": true,
+        "data_uploaded": true
+    }
+]
