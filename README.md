@@ -56,6 +56,61 @@ STEP 5: Start the `simulator` program by running the following command.
 python simulator/main.py 
 ```
 
-The following menu will be displayed if it is runing successfully.
+The following menu will be displayed if it is running successfully.
 
 ![Simulator Guide](images/simulator_guide/simulator_menu.png)
+
+STEP 6: Setup the Server IP Configuration - In order for our simulator to run experiments, it should communicate with a FEDn server / combiner. At this point we have our FEDn combiner running in another VM. We provide the IP of that VM to our simulator for it to enable communication.
+
+Choose Option 1 from the menu by entering `2` and pressing enter. Then enter the IP of the combiner like in this example.
+
+![Set server IP option](images/simulator_guide/set_server_ip.png)
+
+If successfully run, you will see:
+```
+Successfully saved server IP configuration!
+New API server configurations set - API Server at: 192.168.2.105
+```
+
+STEP 7: Validate whether the combiner is running by using Option `3`. This will run a script to test the FEDn Client API against the combiner and check whether a response is made. If it is successful you will see the following.
+
+![Check Server Status](images/simulator_guide/check_server_status.png)
+
+Once all this steps are done, you are ready to run simulations!
+
+## 3. Attack Simulator
+
+Our `simulator` program provides the basic automation required to setup the required folder structure and parameterized scripts to smoothly run an experiment.
+
+### 3.1 Running an experiment (from an example)
+
+Here we use the standard `MNIST PyTorch` experiment available in the original FEDn repository.
+
+In the `simulator` program, run Option `4`to view the existing models avaialble to run experiments.
+
+![Show Models](images/simulator_guide/show_models.png)
+
+You can see that in the initial setup, we only have two example models, `iris-sklearn` and `mnist-pytorch` stored in our simulator program. Let us choose `mnist-pytorch` for a demo.
+
+STEP 1: In a different terminal, navigate to folder `/home/ubuntu/fedn-attack-sim-uu` and run the following command (use the .simulator venv):
+
+`python examples/mnist-pytorch/test_simulation.py`
+
+You will see the following menu:
+
+![MNIST Demo Start](images/simulator_guide/mnist_demo_start.png)
+
+STEP 2: Enter the # of benign clients and # of malicious clients and the attack type defined in the attack implementation code as follows.
+
+![Run Label Flipping Attack](images/simulator_guide/run_label_flipping.png)
+
+This will start up the containers for clients and display the current sessions recorded in FEDn Server as follows. Let's give `DEMO_SESSION_01` as the name for our demo experiment. Press enter and set the number of rounds to 5:
+
+![Start Containers](images/simulator_guide/start_containers.png)
+
+This will start and complete the simulation, saving the results in FEDn Server and will finally kill all the client containers to end the simulation as follows:
+
+![Run Demo Session](images/simulator_guide/run_demo_session.png)
+
+### 3.2 Setting up a new model
+
